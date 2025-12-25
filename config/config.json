@@ -1,0 +1,28 @@
+{
+  "server": {
+    "port": "8080",
+    "timeout_seconds": 30
+  },
+  "ai": {
+    "provider": "openai",
+    "model": "gpt-4-turbo",
+    "api_key": "sk-proj-123456..."
+  },
+  "scrappers": {
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)...",
+    "amazon": {
+      "review_link": {
+        "host": "www.amazon.in",
+        "path": "product-reviews/<PRODUCT_ID>/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews",
+        "full_link": "https://www.amazon.in/product-reviews/<PRODUCT_ID>/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews"
+      }
+    },
+    "flipkart": {
+      "review_link": {
+        "host": "www.flipkart.com",
+        "path": "",
+        "full_link": ""
+      }
+    }
+  }
+}
