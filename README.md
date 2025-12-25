@@ -18,8 +18,6 @@ This project follows a pragmatic, domain-focused folder structure to ensure sepa
 
 ```text
 product-review-analyzer/
-├── cmd/
-│   └── main.go              # Application Entry Point. Wires the Scraper, Analyzer, and API together.
 │
 ├── config/
 │   └── config.yaml          # External configuration (CSS selectors, API timeouts, Base URLs).
@@ -42,5 +40,5 @@ product-review-analyzer/
 │       └── handlers.go      # Controllers that accept requests and orchestrate the Scraper -> Analyzer flow.
 │
 ├── go.mod                   # Go Module definition.
-└── Makefile                 # Build and run automation.
+|── main.go                  # Server logic
 ```
