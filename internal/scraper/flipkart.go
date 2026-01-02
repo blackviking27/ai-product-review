@@ -1,10 +1,13 @@
 package scraper
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"log/slog"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -58,61 +61,68 @@ func getProductReviewFromDocforFlipkart(doc *goquery.Document) (reviews []model.
 
 func getProductDetailsFromDocForFlipkart(doc *goquery.Document) (productSpecs model.ProductSpecs) {
 
-	// -----------------------------------------------------------------------
-	// 1. EXTRACT PRODUCT NAME
-	// Selector: h1.CEn5rD > span.LMizgS
-	// -----------------------------------------------------------------------
-	productSpecs.Name = strings.TrimSpace(doc.Find("h1.CEn5rD span.LMizgS").Text())
+	// Extract the JSON Script
+	// The data is inside <script id="is_script">window.__INITIAL_STATE__ = { ... }</script>
+	scriptContent := doc.Find("script#is_script").Text()
+	if scriptContent == "" {
+		log.Fatal("Could not find the script tag containing window.__INITIAL_STATE__")
+	}
 
-	// -----------------------------------------------------------------------
-	// 2. EXTRACT SPECIFICATIONS
-	// Structure: .QZKsWF (Section) -> .ZRVDNa (Title) -> table.n7infM (Table)
-	// -----------------------------------------------------------------------
-	doc.Find("div.QZKsWF").Each(func(i int, section *goquery.Selection) {
-		// Section Title (e.g., "Processor And Memory Features")
-		secTitle := strings.TrimSpace(section.Find("div.ZRVDNa").Text())
-		if secTitle == "" {
-			return
+	// Clean the string to get valid JSON
+	jsonStr := strings.TrimSpace(scriptContent)
+	jsonStr = strings.TrimPrefix(jsonStr, "window.__INITIAL_STATE__ = ")
+	jsonStr = strings.TrimSuffix(jsonStr, ";")
+
+	// Parse JSON flexibly
+	// We use map[string]interface{} because the keys (like "10001", "10002") are dynamic
+	var data map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
+		log.Fatal("Error parsing JSON:", err)
+	}
+
+	// Navigate the JSON structure to find Product Data
+	// Path: pageDataV4 -> page -> data -> [Dynamic Slot ID] -> [Widget List] -> widget -> data -> product -> value
+	pageData, _ := data["pageDataV4"].(map[string]interface{})
+	page, _ := pageData["page"].(map[string]interface{})
+	slots, _ := page["data"].(map[string]interface{})
+
+	var productName string
+	productSpecs.Specs = make(map[string]string)
+
+	// Iterate over the slots (e.g., "10001", "10002")
+	for _, slotContent := range slots {
+		widgets, ok := slotContent.([]interface{})
+		if !ok {
+			continue
 		}
 
-		// if _, ok := productSpecs.TechSpecs[secTitle]; !ok {
-		// 	specs = make(map[string]string)
-		// }
+		for _, w := range widgets {
+			widgetMap, _ := w.(map[string]interface{})
+			widgetDef, _ := widgetMap["widget"].(map[string]interface{})
+			widgetType, _ := widgetDef["type"].(string)
 
-		// Iterate rows in the table inside this section
-		section.Find("table.n7infM tr.row").Each(func(j int, row *goquery.Selection) {
-			// Key: td.JMeybS
-			key := strings.TrimSpace(row.Find("td.JMeybS").Text())
-			// Value: td.QPlg21 -> ul -> li
-			val := strings.TrimSpace(row.Find("td.QPlg21 li").Text())
+			// We are looking for the 'PRODUCT_MIN' widget which contains the summary
+			if widgetType == "PRODUCT_MIN" {
+				wData, _ := widgetDef["data"].(map[string]interface{})
+				product, _ := wData["product"].(map[string]interface{})
+				value, _ := product["value"].(map[string]interface{})
 
-			if key != "" && val != "" {
-				productSpecs.Specs[key] = val
+				// Extract Title
+				if titles, ok := value["titles"].(map[string]interface{}); ok {
+					productName, _ = titles["title"].(string)
+					productSpecs.Name = productName
+				}
+
+				// Extract Key Specs
+				if specs, ok := value["keySpecs"].([]interface{}); ok {
+					for i, s := range specs {
+						productSpecs.Specs[strconv.Itoa(i)] = s.(string)
+					}
+				}
 			}
-		})
-	})
-
-	// -----------------------------------------------------------------------
-	// 3. EXTRACT DESCRIPTION
-	// Structure: The description is split into multiple blocks with class .wV4AgS
-	// Each block has a Title (.J9EKOQ) and Body (.QsvKzw p)
-	// -----------------------------------------------------------------------
-	var descBuilder strings.Builder
-
-	// Find the container following "Product Description" label
-	doc.Find("div.wV4AgS").Each(func(i int, s *goquery.Selection) {
-		title := strings.TrimSpace(s.Find("div.J9EKOQ").Text())
-		body := strings.TrimSpace(s.Find("div.QsvKzw p").Text())
-
-		if title != "" || body != "" {
-			if title != "" {
-				descBuilder.WriteString(title + ": ")
-			}
-			descBuilder.WriteString(body + "\n\n")
 		}
-	})
+	}
 
-	productSpecs.Description = []string{strings.TrimSpace(descBuilder.String())}
 	return productSpecs
 }
 
