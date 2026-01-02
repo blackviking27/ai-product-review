@@ -11,7 +11,7 @@ type ProductSpecs struct {
 	Description []string
 }
 
-type ExtractedProdictDetails struct {
+type ExtractedProductDetails struct {
 	Review []Review
 	Specs  ProductSpecs
 }
@@ -28,7 +28,7 @@ type ScrappedDataRequest struct {
 type ScrappedDataResponse struct {
 	Name       string                  `json:"name"`
 	ProductUrl string                  `json:"productUrl"`
-	Data       ExtractedProdictDetails `json:"data"`
+	Data       ExtractedProductDetails `json:"data"`
 }
 
 const (

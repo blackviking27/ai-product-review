@@ -29,9 +29,9 @@ import (
 // 	return fullProductReviewLink, nil
 // }
 
-func extractDetailsFromPage(htmlPageReader io.Reader) (model.ExtractedProdictDetails, error) {
+func extractDetailsFromPage(htmlPageReader io.Reader) (model.ExtractedProductDetails, error) {
 
-	var extractedDetail model.ExtractedProdictDetails
+	var extractedDetail model.ExtractedProductDetails
 
 	doc, err := goquery.NewDocumentFromReader(htmlPageReader)
 
@@ -125,13 +125,13 @@ func getProductDetailsFromDocForAmazon(doc *goquery.Document) model.ProductSpecs
 	return specs
 }
 
-func ScrapteDataFromAmazonUrl(url string, config config.Config) (model.ExtractedProdictDetails, error) {
+func ScrapteDataFromAmazonUrl(url string, config config.Config) (model.ExtractedProductDetails, error) {
 
 	htmlPageReader, err := GetProuductReviewHtml(url)
 
 	if err != nil {
 		slog.Error(err.Error())
-		return model.ExtractedProdictDetails{}, err
+		return model.ExtractedProductDetails{}, err
 	}
 
 	extractedDetails, err := extractDetailsFromPage(htmlPageReader)

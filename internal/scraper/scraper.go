@@ -55,9 +55,9 @@ func GetProuductReviewHtml(url string) (io.ReadCloser, error) {
 
 }
 
-func ScrapeDataFromURL(productLink string) (model.ExtractedProdictDetails, error) {
+func ScrapeDataFromURL(productLink string) (model.ExtractedProductDetails, error) {
 	config, err := config.LoadConfig()
-	var extractedProductDetails model.ExtractedProdictDetails
+	var extractedProductDetails model.ExtractedProductDetails
 	parsedProductLink, err := url.Parse(productLink)
 	if err != nil {
 		slog.Error("Unable to parse the product link")

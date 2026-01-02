@@ -126,9 +126,9 @@ func getProductDetailsFromDocForFlipkart(doc *goquery.Document) (productSpecs mo
 	return productSpecs
 }
 
-func ScrapteDataFromFlipkartUrl(url string, config config.Config) (model.ExtractedProdictDetails, error) {
+func ScrapteDataFromFlipkartUrl(url string, config config.Config) (model.ExtractedProductDetails, error) {
 
-	var productDetailsAndReviews model.ExtractedProdictDetails
+	var productDetailsAndReviews model.ExtractedProductDetails
 
 	htmlPageReader, err := GetProuductReviewHtml(url)
 	if err != nil {
