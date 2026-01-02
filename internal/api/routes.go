@@ -15,7 +15,8 @@ func NewRouter() http.Handler {
 	router.Use(middleware.Recoverer)
 
 	// Defining Routes
-	router.Get("/scrape", GetScrapedDataForProduct)
+	router.Post("/scrape", GetScrapedDataForProduct)
+	router.Post("/review", GetAiReviewForProduct)
 
 	return router
 }

@@ -54,41 +54,40 @@ func GetProuductReviewHtml(url string) (io.ReadCloser, error) {
 
 }
 
-func ScrapeDataFromURL(productLink string) ([]model.Review, error) {
+func ScrapeDataFromURL(productLink string) (model.ExtractedProdictDetails, error) {
 	config, err := config.LoadConfig()
+	var extractedProductDetails model.ExtractedProdictDetails
 	parsedProductLink, err := url.Parse(productLink)
 	if err != nil {
 		slog.Error("Unable to parse the product link")
-		return nil, errors.New("Unable to parse the product link")
+		return extractedProductDetails, errors.New("Unable to parse the product link")
 	}
 
 	fullProductReviewLink, err := getFullProdcutURL(*parsedProductLink, *config)
 
 	if err != nil {
 		slog.Error(err.Error())
-		return []model.Review{}, err
+		return extractedProductDetails, err
 	}
 
 	fullProductLinkUrlObject, err := url.Parse(fullProductReviewLink)
 
 	if err != nil {
 		slog.Error("Unable to parse full product review link: " + err.Error())
-		return nil, err
+		return extractedProductDetails, err
 	}
-
-	var productReviews []model.Review
 
 	switch fullProductLinkUrlObject.Host {
 	case config.Scrapper.Amazon.ReviewLink.Host:
-		productReviews, err = ScrapteDataFromAmazonUrl(fullProductLinkUrlObject.String(), *config)
+		extractedProductDetails, err = ScrapteDataFromAmazonUrl(fullProductLinkUrlObject.String(), *config)
 	case config.Scrapper.Flipkart.ReviewLink.Host:
-		productReviews, err = ScrapteDataFromFlipkartUrl(fullProductLinkUrlObject.String(), *config)
+		extractedProductDetails, err = ScrapteDataFromFlipkartUrl(fullProductLinkUrlObject.String(), *config)
 	}
 
-	if err != nil || len(productReviews) == 0 {
+	if err != nil || len(extractedProductDetails.Review) == 0 {
 		slog.Error("No reviews found for the product")
-		return nil, err
+		return extractedProductDetails, err
 	}
 
-	return productReviews, nil
+	return extractedProductDetails, nil
 }

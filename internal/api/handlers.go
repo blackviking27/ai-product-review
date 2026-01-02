@@ -28,7 +28,15 @@ func ThrowErrorInResponse(w http.ResponseWriter, code int, name, msg string) {
 
 func GetScrapedDataForProduct(w http.ResponseWriter, r *http.Request) {
 
-	productUrlProvidedByUser := r.URL.Query().Get("url")
+	var reqBody model.ScrappedDataRequest
+	err := json.NewDecoder(r.Body).Decode(&reqBody)
+	if err != nil {
+		slog.Error("Error while parsing the request body for parsing request body")
+		ThrowErrorInResponse(w, http.StatusBadRequest, "INTERNAL_SERVER_ERROR", "Error while parsing the request body for parsing request body")
+		return
+	}
+
+	productUrlProvidedByUser := reqBody.Url
 
 	if productUrlProvidedByUser == "" {
 		slog.Error("No product URL found")
@@ -37,7 +45,7 @@ func GetScrapedDataForProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("Query Params: ", productUrlProvidedByUser)
-	reviews, err := scraper.ScrapeDataFromURL(productUrlProvidedByUser)
+	extractedDetail, err := scraper.ScrapeDataFromURL(productUrlProvidedByUser)
 
 	if err != nil {
 		slog.Error("Unable to scrape data :" + err.Error())
@@ -48,12 +56,32 @@ func GetScrapedDataForProduct(w http.ResponseWriter, r *http.Request) {
 	scrappedResponse := model.ScrappedDataResponse{
 		Name:       "Scrapped Data",
 		ProductUrl: productUrlProvidedByUser,
-		Reviews:    reviews,
+		Data:       extractedDetail,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
 	json.NewEncoder(w).Encode(scrappedResponse)
+
+}
+
+func GetAiReviewForProduct(w http.ResponseWriter, r *http.Request) {
+
+	var requestBody model.ApiReviewRequestBody
+
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		slog.Error("Missing/Incorrect fields being passed ")
+		ThrowErrorInResponse(w, http.StatusBadRequest, "Missing fields", "Required fields are missing in the request body")
+		return
+	}
+
+	productReviews, err := scraper.GetProuductReviewHtml(requestBody.ProductUrl)
+	if err != nil {
+		ThrowErrorInResponse(w, http.StatusInternalServerError, "InternalServerError", err.Error())
+	}
+	fmt.Println(productReviews)
+	// verdict := analyzer.GetAiReviewForProduct(productReviews)
 
 }
