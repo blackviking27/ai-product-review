@@ -2,10 +2,10 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 
+	"github.com/blackviking27/ai-product-reviwer/internal/analyzer"
 	"github.com/blackviking27/ai-product-reviwer/internal/model"
 	"github.com/blackviking27/ai-product-reviwer/internal/scraper"
 )
@@ -44,7 +44,6 @@ func GetScrapedDataForProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Query Params: ", productUrlProvidedByUser)
 	extractedDetail, err := scraper.ScrapeDataFromURL(productUrlProvidedByUser)
 
 	if err != nil {
@@ -77,11 +76,15 @@ func GetAiReviewForProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	productReviews, err := scraper.GetProuductReviewHtml(requestBody.ProductUrl)
+	opinion, err := analyzer.GetAiReviewForProduct(requestBody)
 	if err != nil {
-		ThrowErrorInResponse(w, http.StatusInternalServerError, "InternalServerError", err.Error())
+		ThrowErrorInResponse(w, http.StatusInternalServerError, "Error", err.Error())
+		return
 	}
-	fmt.Println(productReviews)
-	// verdict := analyzer.GetAiReviewForProduct(productReviews)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	json.NewEncoder(w).Encode(opinion)
 
 }

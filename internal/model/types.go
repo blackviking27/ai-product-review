@@ -37,13 +37,18 @@ const (
 )
 
 type ApiReviewRequestBody struct {
-	ApiKey     string `json:"apiKey"`
-	ProductUrl string `json:"productUrl"`
+	ApiKey     string `json:"apiKey" validate:"optional"`
+	ProductUrl string `json:"productUrl" validate:"required"`
+	AIModel    string `json:"aiModel" validate:"required"`
+	AICompany  string `json:"aiCompany" validate:"optional"`
 }
 
-type ProductVerdict struct {
-	Verdict     string
-	Rating      string
-	ProductName string
-	ProductType string
+type ProductOpinion struct {
+	Name           string   `json:"name"`
+	Description    string   `json:"description"`
+	OverallVerdict string   `json:"overall_verdict"`
+	Pros           []string `json:"pros"`
+	Cons           []string `json:"cons"`
+	RatingScore    float64  `json:"rating_score"`
+	Summary        string   `json:"executive_summary"`
 }
